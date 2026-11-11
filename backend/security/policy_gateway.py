@@ -14,7 +14,7 @@ the evaluator's choice, never something an agent or browser can switch off.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Iterable, Optional, Tuple
 
 CURRENCY = "USD"
@@ -157,7 +157,11 @@ def _valid_amount(value: object) -> Optional[Decimal]:
     """Return the amount if it's a positive, finite Decimal with at most 2 decimals."""
     if not isinstance(value, Decimal) or not value.is_finite() or value <= 0:
         return None
-    if value != value.quantize(Decimal("0.01")):
+    try:
+        # Raises for values too large to quantize, e.g. Decimal("1E+30").
+        if value != value.quantize(Decimal("0.01")):
+            return None
+    except InvalidOperation:
         return None
     return value
 

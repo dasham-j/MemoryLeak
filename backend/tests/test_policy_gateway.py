@@ -129,7 +129,7 @@ def test_lookalike_payee_is_denied():
 
 @pytest.mark.parametrize(
     "amount",
-    [Decimal("0"), Decimal("-20.00"), Decimal("19.999"), Decimal("NaN"), Decimal("Infinity"), 20.0, "20.00", None],
+    [Decimal("0"), Decimal("-20.00"), Decimal("19.999"), Decimal("NaN"), Decimal("Infinity"), Decimal("1E+30"), 20.0, "20.00", None],
 )
 def test_malformed_amounts_are_denied_without_raising(amount):
     proposal = PaymentProposal(amount=amount, payee=PAYEE)
@@ -150,8 +150,9 @@ def test_non_usd_currency_is_denied():
     assert CHECK_AUTHORIZED_AMOUNT in failed(decision)
 
 
-def test_invalid_policy_denies_everything():
-    policy = PaymentPolicy.create(Decimal("NaN"), Decimal("50.00"), False, [PAYEE])
+@pytest.mark.parametrize("authorized", [Decimal("NaN"), Decimal("1E+30")])
+def test_invalid_policy_denies_everything(authorized):
+    policy = PaymentPolicy.create(authorized, Decimal("50.00"), False, [PAYEE])
     assert not evaluate(policy, LEGIT).allowed
 
 
